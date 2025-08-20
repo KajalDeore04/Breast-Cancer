@@ -1,6 +1,6 @@
 # Breast Cancer Detector
 
-A web application that uses a machine learning model to predict whether breast cancer is malignant or benign based on medical features.  
+A web application that uses a machine learning model to predict whether breast cancer is malignant or benign based on medical features with 97% accuracy.  
 **Live Demo:** [https://breast-cancer-xv3i.onrender.com/](https://breast-cancer-xv3i.onrender.com/)
 
 ---
