@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breast Cancer Detector</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #141420;
+            --bg-card: rgba(20, 20, 32, 0.9);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b8;
+            --accent: #6366f1;
+            --accent-bright: #818cf8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.1);
+            --glow: rgba(99, 102, 241, 0.4);
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(129, 140, 248, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+            z-index: -1;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+        
+        @keyframes backgroundShift {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .main-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+        
+        .app-card {
+            max-width: 600px;
+            width: 100%;
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.8),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+        
+        .app-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-bright), transparent);
+            animation: scanLine 3s linear infinite;
+        }
+        
+        @keyframes scanLine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .header {
+            padding: 3rem 2rem 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(129, 140, 248, 0.05));
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+            animation: rotate 20s linear infinite;
+            z-index: -1;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-bright));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+        }
+        
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+        
+        .form-section {
+            padding: 2.5rem 2rem;
+        }
+        
+        .info-panel {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .info-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .info-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .code-example {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--accent-bright);
+            word-break: break-all;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .form-group {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 1.25rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            color: white;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            min-height: 140px;
+            resize: vertical;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            color: white;
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 
+                0 0 0 4px var(--glow),
+                0 0 20px rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .form-control::placeholder {
+            color: rgba(160, 160, 184, 0.6);
+        }
+        
+        .btn {
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 1rem 2rem;
+            border-radius: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-bright));
+            color: white;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.6);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .alert {
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-top: 2rem;
+            font-weight: 500;
+            border: none;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .alert::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: inherit;
+            filter: blur(20px);
+            z-index: -1;
+        }
+        
+        .alert-success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+        }
+        
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);
+        }
+        
+        .disclaimer {
+            padding: 2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Floating elements animation */
+        .floating-element {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--accent-bright);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .floating-element:nth-child(1) {
+            top: 20%;
+            left: 20%;
+            animation-delay: 0s;
+        }
+        
+        .floating-element:nth-child(2) {
+            top: 60%;
+            right: 20%;
+            animation-delay: 2s;
+        }
+        
+        .floating-element:nth-child(3) {
+            bottom: 20%;
+            left: 60%;
+            animation-delay: 4s;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) scale(1);
+                opacity: 0.7;
+            }
+            50% {
+                transform: translateY(-20px) scale(1.5);
+                opacity: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem 0.5rem;
+            }
+            
+            .header {
+                padding: 2rem 1.5rem 1.5rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .form-section {
+                padding: 2rem 1.5rem;
+            }
+            
+            .disclaimer {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    
+    <div class="main-container">
+        <div class="app-card">
+            <div class="header">
+                <h1>Cancer Detector</h1>
+                <p>Advanced AI Diagnostic Platform</p>
+            </div>
+            
+            <div class="form-section">
+            
+                
+                <button type="button" class="btn btn-secondary" onclick="loadSample()">
+                    Load Sample Dataset
+                </button>
+                
+                <form action="/predict" method="post" id="analysisForm">
+                    <div class="form-group">
+                        <label for="feature" class="form-label">Medical Features</label>
+                        <textarea 
+                            class="form-control" 
+                            id="feature" 
+                            name="feature" 
+                            placeholder="Enter feature vector..."
+                            required
+                        ></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                        <span>Initialize Analysis</span>
+                    </button>
+                </form>
+                
+                <div id="results-display">
+    {% if result == 'cancerous' %}
+        <div class="alert alert-danger">
+            <strong>Malignant Detection:</strong> Analysis indicates cancerous characteristics detected.
+        </div>
+    {% elif result == 'non-cancerous' %}
+        <div class="alert alert-success">
+            <strong>Benign Classification:</strong> Analysis indicates non-cancerous characteristics.
+        </div>
+    {% endif %}
+</div>
+
+            </div>
+            
+            <div class="disclaimer">
+                Advanced AI system for research purposes • Consult medical professionals
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loadSample() {
+            const sampleData = ["0.39698916,  0.11958479,  1.96065509,  0.19953494,  0.01247322,1.30546248,  1.06616467,  0.94483968,  0.66704965,  1.79193526,1.11267286, -0.11319029, -0.31356609,  0.01002769, -0.1594023 ,-0.45262375,  0.90198449,  0.45425775, -0.15808988, -0.24543922,0.59105739,  0.25486944,  1.91374485,  0.50983548,  0.11676769,1.57295704,  2.61526825,  2.04622942,  0.87377865,  2.08138973,2.81755532"];
+            const textarea = document.getElementById('feature');
+            textarea.value = sampleData;
+            
+            // Animate value input
+            textarea.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                textarea.style.transform = 'scale(1)';
+            }, 200);
+        }
+        
+        // Auto-resize textarea
+        const textarea = document.getElementById('feature');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.max(140, this.scrollHeight) + 'px';
+        });
+        
+        // Form submission animation
+        document.getElementById('analysisForm').addEventListener('submit', function(e) {
+            const btn = document.getElementById('analyzeBtn');
+            btn.innerHTML = '<span>Processing...</span>';
+            btn.style.background = 'linear-gradient(135deg, #6366f1, #818cf8)';
+            
+            // Create processing animation
+            let dots = 0;
+            const interval = setInterval(() => {
+                dots = (dots + 1) % 4;
+                btn.innerHTML = `<span>Processing${'.'.repeat(dots)}</span>`;
+            }, 500);
+            
+            // Stop animation after 3 seconds (adjust based on your server response time)
+            setTimeout(() => {
+                clearInterval(interval);
+            }, 3000);
+        });
+        
+        // Check for results in URL parameters
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const result = urlParams.get('result');
+            
+            if (result === 'cancerous') {
+                showResult('danger', '<strong>Malignant Detection:</strong> Analysis indicates cancerous characteristics detected.');
+            } else if (result === 'non-cancerous') {
+                showResult('success', '<strong>Benign Classification:</strong> Analysis indicates non-cancerous characteristics.');
+            }
+        });
+        
+        function showResult(type, message) {
+            const container = document.getElementById('results-display');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            
+            // Animate result appearance
+            const alert = container.querySelector('.alert');
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                alert.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                alert.style.opacity = '1';
+                alert.style.transform = 'translateY(0)';
+            }, 100);
+        }
+        
+        // Add subtle cursor glow effect
+        document.addEventListener('mousemove', function(e) {
+            const cursor = document.querySelector('.cursor-glow');
+            if (!cursor) {
+                const glowElement = document.createElement('div');
+                glowElement.className = 'cursor-glow';
+                glowElement.style.cssText = `
+                    position: fixed;
+                    width: 20px;
+                    height: 20px;
+                    background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%);
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 9999;
+                    transition: opacity 0.3s;
+                `;
+                document.body.appendChild(glowElement);
+            }
+            
+            const glow = document.querySelector('.cursor-glow');
+            glow.style.left = (e.clientX - 10) + 'px';
+            glow.style.top = (e.clientY - 10) + 'px';
+        });
+    </script>
+</body>
+</html>
